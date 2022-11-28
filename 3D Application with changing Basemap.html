@@ -1,0 +1,148 @@
+<!--
+
+To run this demo, you need to replace 'YOUR_API_KEY' with an API key from the ArcGIS Developers dashboard.
+
+
+-->
+
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Happy GIS Day!</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #BasemapNamesContainer {
+            background-color: white;
+            color: black;
+            padding: 6px;
+            position: absolute;
+            height: 100px;
+            top: 3%;
+            right: 1%;
+            width: 320px;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.25/"></script>
+
+    <script>
+        require([
+            "esri/config",
+            "esri/Map",
+            "esri/views/SceneView",
+            "esri/widgets/BasemapGallery"
+
+        ], function (esriConfig,
+            Map,
+            SceneView,
+            BasemapGallery
+        ) {
+
+            esriConfig.apiKey = "YOUR_API_KEY";
+
+
+            const map = new Map({
+                basemap: "arcgis-topographic", //Basemap layer service
+                ground: "world-elevation", //Elevation service
+            });
+
+            const mySceneView = new SceneView({
+                container: "viewDiv",
+                map: map,
+                center: [77.069710, 28.679079],
+                alphaCompositingEnabled: true,
+                qualityProfile: "high",
+                camera: {
+                    position: [77.069710, 28.679079, 19921223.30821],
+                    heading: 2.03,
+                    tilt: 0.13
+                },
+                environment: {
+                    starsEnabled: true,
+                    atmosphereEnabled: true,
+                },
+                constraints: {
+                    altitude: {
+                        min: 10000000,
+                        max: 25000000
+                    }
+                }
+            });
+            mySceneView.when(function (view) {
+
+                const basemap = new BasemapGallery({
+                    view: mySceneView
+                });
+                const basemapsArray = [];
+                basemap.when(function (event) {
+                    var portal = basemap.source.portal;
+                    basemap.source.portal.fetchBasemaps("title:\"World Basemaps for Developers\"").then(function (basemaps) {
+                        basemaps.forEach(element => {
+                            basemapsArray.push(element);
+                        });
+                    });
+                }, function (error) {
+                    console.log(error);
+                });
+                var i = 0;
+                function rotate() {
+                    if (!mySceneView.interacting) {
+                        const camera = mySceneView.camera.clone();
+                        camera.position.longitude -= 0.2;
+                        mySceneView.goTo(camera, { animate: false });
+                        requestAnimationFrame(rotate);
+                    }
+                }
+                setInterval(function () {
+
+                    if (basemapsArray.length > 0) {
+                        if (i < basemapsArray.length) {
+                            map.basemap = basemapsArray[i];
+                            document.getElementById("BasemapNames").innerHTML = `<b>Basemap : ${basemapsArray[i].portalItem.title}</b>`;
+                            i++;
+                        } else {
+                            i = 0;
+                            map.basemap = basemapsArray[i];
+                            document.getElementById("BasemapNames").innerHTML = `<b>Basemap : ${basemapsArray[i].portalItem.title}</b>`;
+                        }
+
+                    }
+                    rotate();
+
+                }, 5000);
+            }, function (error) {
+                console.log(error);
+            });
+        });
+    </script>
+
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    <div id="BasemapNamesContainer" class="esri-widget">
+        <p><i>
+                <b>
+                    Why settle for one Basemap when you have Many!
+                </b>
+            </i>
+        </p>
+        <div id="BasemapNames" style="color: brown;">
+
+        </div>
+    </div>
+</body>
+
+</html>
